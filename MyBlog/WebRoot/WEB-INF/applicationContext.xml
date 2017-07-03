@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+	<property name="driverClassName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"></property>
+	<property name="url" value="jdbc:sqlserver://localhost:1433; databaseName=testdb"></property>
+	<property name="username" value="sa"></property>
+	<property name="password" value="123456"></property>
+	<property name="maxActive" value="100"></property>
+	<property name="maxIdle" value="30"></property>
+	<property name="maxWait" value="500"></property>
+	<property name="defaultAutoCommit" value="true"></property>
+</bean>
+
+<bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+	<property name="dataSource" ref="dataSource"></property>
+	<property name="hibernateProperties">
+		<props>
+			<prop key="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</prop>
+			<prop key="hibernate.show_sql">true</prop>
+		</props>
+	</property>
+	<property name="mappingResources">
+		<list>
+			<value>com/myblog/model/TAdmin.hbm.xml</value>
+			<value>com/myblog/model/TEssay.hbm.xml</value>
+			<value>com/myblog/model/TVisitorMessage.hbm.xml</value>
+		</list>	
+	</property>
+</bean>
+
+<!-- DaoImpl层注入sessionFactory -->
+<bean id="adminDao" class="com.myblog.dao.impl.AdminDaoImpl" scope="singleton">
+	<property name="sessionFactory">
+		<ref bean="sessionFactory"/>
+	</property>
+</bean>
+
+<bean id="essayListDao" class="com.myblog.dao.impl.EssayListDaoImpl" scope="singleton">
+	<property name="sessionFactory">
+		<ref bean="sessionFactory"/>
+	</property>
+</bean>
+
+<!-- ServiceImpl层注入DaoImpl -->
+<bean id="adminService" class="com.myblog.service.impl.AdminServiceImpl">
+	<property name="adminDao" ref="adminDao"></property>
+</bean>
+
+<bean id="essayListService" class="com.myblog.service.impl.EssayListServiceImpl">
+	<property name="essayListDao" ref="essayListDao"></property>
+</bean>
+
+<!-- Action层注入ServiceImpl -->
+<bean id="loginAction" class="com.myblog.action.LoginAction">
+	<property name="adminService" ref="adminService"></property>
+</bean>
+
+<bean id="essayListAction" class="com.myblog.action.EssayListAction">
+	<property name="essayListService" ref="essayListService"></property>
+</bean>
+
+<bean id="essayAction" class="com.myblog.action.EssayAction">
+	<property name="essayListService" ref="essayListService"></property>
+</bean>
+
+<!-- ajaxServlet层注入 -->
+<bean id="checkAdminServlet" class="com.myblog.ajaxServlet.CheckAdminServlet">
+	<property name="adminService" ref="adminService"></property>
+</bean>
+</beans>
